@@ -89,7 +89,7 @@ func TestStatusKeysExistInEveryLocale(t *testing.T) {
 
 func TestStateString(t *testing.T) {
 	seen := map[string]bool{}
-	for s := StateLoading; s <= StateSettings; s++ {
+	for s := StateLoading; s <= StateMainMenu; s++ {
 		name := s.String()
 		if name == "unknown" || seen[name] {
 			t.Errorf("state %d has name %q", s, name)

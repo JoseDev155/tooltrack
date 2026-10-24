@@ -189,13 +189,16 @@ La fórmula original (un OR independiente por componente) daba falsos positivos:
 
 | Estado | Pantalla |
 | --- | --- |
-| `StateLoading` | Spinner mientras se comprueban las herramientas. |
+| `StateMainMenu` | Primera pantalla: nombre de la herramienta y tres opciones (ver estatus, preferencias, salir). No se consulta nada todavía. |
+| `StateLoading` | Spinner mientras se comprueban las herramientas (al elegir *Ver estatus de herramientas*). |
 | `StateDashboard` | Tabla alfabética: herramienta, versión local, última versión y estado. |
-| `StateActionSelect` | Menú: actualizar todas, seleccionar para actualizar, seleccionar para excluir, preferencias, salir. |
+| `StateActionSelect` | Menú «¿Qué quieres hacer?»: actualizar todas, seleccionar para actualizar, seleccionar para excluir, salir. |
 | `StateSelectUpdate` / `StateSelectExclude` | Lista con casillas de las herramientas actualizables. |
 | `StateUpdating` | Una línea por herramienta con spinner, ✓ o ✗. |
 | `StateFinished` | Resumen de éxitos y fallos; si hubo fallos, muestra la ruta del log. |
-| `StateSettings` | Idioma y acción por defecto (se guardan al cambiar). |
+| `StateSettings` | Idioma y acción por defecto (se guardan al cambiar). Se abre desde el menú principal. |
+
+Flujo: menú principal → *Ver estatus* (búsqueda de versiones) → panel → `Enter` → menú de acciones → selección/actualización → resumen → `Enter` vuelve al menú principal. `Esc` retrocede un paso (acciones → panel → menú principal; preferencias → menú principal). Las versiones se buscan cada vez que se abre el estatus, no al iniciar el programa.
 
 Estados de una herramienta (`app.Status`): *Actualizada*, *Nueva versión disponible*, *No instalada* y *Sin verificar* (instalada, pero sin poder determinar la última versión; se muestra el motivo debajo).
 
@@ -206,14 +209,14 @@ Estados de una herramienta (`app.Status`): *Actualizada*, *Nueva versión dispon
 | `↑` / `k`, `↓` / `j` | Mover (con vuelta al otro extremo). |
 | `Espacio` | Marcar o desmarcar. Cambia el valor en preferencias. |
 | `Enter` | Confirmar. |
-| `Esc` | Volver. |
+| `Esc` | Volver un paso. |
 | `r` | Volver a comprobar (en el panel). |
 | `l` | Abrir el log en el visor predeterminado (solo tras un fallo). |
 | `q` / `Ctrl+C` | Salir. Durante una actualización cancela la herramienta en curso y sale cuando termina de cerrarse. |
 
 ### 8.3 Acción por defecto
 
-Se aplica una sola vez al iniciar, tras la primera comprobación: `update_all` actualiza de inmediato si hay algo que actualizar; `update_selected` y `exclude_selected` abren la pantalla de selección; `ask` muestra el panel. Solo se ofrecen herramientas instaladas, habilitadas, con actualización disponible y con comando de actualización para el sistema actual.
+Se aplica una sola vez por sesión, tras la primera comprobación de versiones (cuando el usuario abre el estatus): `update_all` actualiza de inmediato si hay algo que actualizar; `update_selected` y `exclude_selected` abren la pantalla de selección; `ask` muestra el panel. Solo se ofrecen herramientas instaladas, habilitadas, con actualización disponible y con comando de actualización para el sistema actual.
 
 ## 9. Internacionalización
 
@@ -252,6 +255,7 @@ Los archivos `assets/locales/{es,en}.json` son planos (clave → texto) y se emb
 | Actualizaciones | Paralelas o secuenciales | Secuenciales por defecto |
 | Salida de versión | Solo stdout | stdout y stderr |
 | Pantalla de carga | Barra de progreso indeterminada | Spinner |
+| Pantalla inicial | Búsqueda de versiones al arrancar | Menú principal; la búsqueda se hace al elegir *Ver estatus* |
 | Estados de una herramienta | 3 | 4 (se añade *Sin verificar*) |
 | Nombre | `updater` | `tooltrack` |
 | GUI Wails | En el Makefile | Fase posterior |

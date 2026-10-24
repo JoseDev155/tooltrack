@@ -135,9 +135,12 @@ func press(t *testing.T, m *Model, k string) bool {
 	return pump(t, m, cmd)
 }
 
+// start opens "View tool status" from the main menu and waits for the
+// dashboard (or whatever screen the default action leads to).
 func start(t *testing.T, m *Model) {
 	t.Helper()
 	pump(t, m, m.Init())
+	press(t, m, "enter")
 }
 
 func twoTools(updateA, updateB string) ([]tool.Tool, fakeRemote) {
@@ -158,10 +161,15 @@ func TestDashboardAfterCheck(t *testing.T) {
 	tools, remote := twoTools(`sh -c "true"`, `sh -c "true"`)
 	remote["o/beta"] = "v1.0.0" // beta is up to date
 	m := newModel(t, tools, remote, nil)
-	if m.State() != app.StateLoading || !strings.Contains(m.View(), "Looking up versions") {
-		t.Fatalf("initial state %v:\n%s", m.State(), m.View())
+	pump(t, m, m.Init())
+	if m.State() != app.StateMainMenu {
+		t.Fatalf("initial state = %v, want the main menu", m.State())
 	}
-	start(t, m)
+	_, cmd := m.Update(key("enter"))
+	if m.State() != app.StateLoading || !strings.Contains(m.View(), "Looking up versions") {
+		t.Fatalf("state %v:\n%s", m.State(), m.View())
+	}
+	pump(t, m, cmd)
 
 	if m.State() != app.StateDashboard {
 		t.Fatalf("state = %v", m.State())
@@ -210,12 +218,14 @@ func TestMenuNavigationWraps(t *testing.T) {
 	if m.State() != app.StateDashboard {
 		t.Errorf("esc should go back, state = %v", m.State())
 	}
-	for _, want := range []string{"Update all", "Select tools to update", "Select tools to exclude", "Tool preferences", "Exit"} {
-		press(t, m, "enter")
+	press(t, m, "enter")
+	for _, want := range []string{"What do you want to do?", "Update all", "Select tools to update", "Select tools to exclude", "Exit"} {
 		if !strings.Contains(m.View(), want) {
 			t.Errorf("menu is missing %q:\n%s", want, m.View())
 		}
-		press(t, m, "esc")
+	}
+	if strings.Contains(m.View(), "Tool preferences") {
+		t.Errorf("preferences belong to the main menu only:\n%s", m.View())
 	}
 }
 
@@ -241,9 +251,9 @@ func TestUpdateAll(t *testing.T) {
 		t.Errorf("tool output is not in the log:\n%s", data)
 	}
 
-	press(t, m, "enter") // back to start: checks again
-	if m.State() != app.StateDashboard {
-		t.Errorf("state = %v, want dashboard", m.State())
+	press(t, m, "enter") // back to start
+	if m.State() != app.StateMainMenu {
+		t.Errorf("state = %v, want the main menu", m.State())
 	}
 }
 
@@ -400,11 +410,7 @@ func TestToolWithoutUpdateCommandIsNotOffered(t *testing.T) {
 func TestSettingsChangeLanguageAndDefaultAction(t *testing.T) {
 	tools, remote := twoTools(`sh -c "true"`, `sh -c "true"`)
 	m := newModel(t, tools, remote, func(a *app.App) { a.Cfg.Language = "en" })
-	start(t, m)
-	press(t, m, "enter")
-	for i := 0; i < 3; i++ {
-		press(t, m, "down")
-	}
+	press(t, m, "down")
 	press(t, m, "enter") // Tool preferences
 	if m.State() != app.StateSettings {
 		t.Fatalf("state = %v", m.State())
@@ -428,8 +434,8 @@ func TestSettingsChangeLanguageAndDefaultAction(t *testing.T) {
 		t.Errorf("saved config = %+v, %v", saved, err)
 	}
 	press(t, m, "esc")
-	if m.State() != app.StateActionSelect {
-		t.Errorf("state = %v", m.State())
+	if m.State() != app.StateMainMenu || !strings.Contains(m.View(), "Ver estatus de herramientas") {
+		t.Errorf("state %v:\n%s", m.State(), m.View())
 	}
 }
 
@@ -440,7 +446,11 @@ func TestDefaultActionUpdateAllRunsAtStartup(t *testing.T) {
 	if m.State() != app.StateFinished || len(m.results) != 2 {
 		t.Fatalf("state %v results %+v", m.State(), m.results)
 	}
-	press(t, m, "enter") // back to the start: must NOT update again
+	press(t, m, "enter") // back to the main menu
+	if m.State() != app.StateMainMenu {
+		t.Fatalf("state = %v, want the main menu", m.State())
+	}
+	press(t, m, "enter") // view the status again: must NOT update again
 	if m.State() != app.StateDashboard {
 		t.Errorf("state = %v, want dashboard", m.State())
 	}
@@ -507,6 +517,10 @@ func TestQuitKeys(t *testing.T) {
 func TestQuitWhileLoading(t *testing.T) {
 	tools, remote := twoTools(`sh -c "true"`, `sh -c "true"`)
 	m := newModel(t, tools, remote, nil)
+	m.Update(key("enter")) // start the lookup, but do not wait for it
+	if m.State() != app.StateLoading {
+		t.Fatalf("state = %v", m.State())
+	}
 	_, cmd := m.Update(key("q"))
 	if msg := cmd(); msg != (tea.QuitMsg{}) {
 		t.Errorf("got %T, want QuitMsg", msg)
@@ -579,5 +593,90 @@ func TestNextWraps(t *testing.T) {
 	}
 	if got := next([]string{"a", "b"}, "zzz"); got != "a" {
 		t.Errorf("unknown current value should start over, got %q", got)
+	}
+}
+
+func TestMainMenuIsTheFirstScreen(t *testing.T) {
+	tools, remote := twoTools(`sh -c "true"`, `sh -c "true"`)
+	m := newModel(t, tools, remote, nil)
+	if cmd := m.Init(); cmd != nil {
+		t.Error("nothing should run before the user picks an option")
+	}
+	if m.State() != app.StateMainMenu {
+		t.Fatalf("state = %v", m.State())
+	}
+	view := m.View()
+	for _, want := range []string{"tooltrack", "View tool status", "Tool preferences", "Exit", "▸ View tool status", "↑/↓: move"} {
+		if !strings.Contains(view, want) {
+			t.Errorf("main menu is missing %q:\n%s", want, view)
+		}
+	}
+	if strings.Contains(view, "Update all") || strings.Contains(view, "Alpha") {
+		t.Errorf("the main menu must not show statuses or actions:\n%s", view)
+	}
+	for _, tl := range m.app.Tools {
+		if tl.IsInstalled || tl.InstalledVersion != "" {
+			t.Errorf("versions were looked up before choosing the status: %+v", tl)
+		}
+	}
+}
+
+func TestMainMenuNavigation(t *testing.T) {
+	tools, remote := twoTools(`sh -c "true"`, `sh -c "true"`)
+	m := newModel(t, tools, remote, nil)
+	press(t, m, "up")
+	if m.cursor != mainLen-1 {
+		t.Errorf("up from the top should wrap, cursor = %d", m.cursor)
+	}
+	press(t, m, "down")
+	if m.cursor != 0 {
+		t.Errorf("cursor = %d", m.cursor)
+	}
+	press(t, m, "esc") // nothing to go back to
+	if m.State() != app.StateMainMenu {
+		t.Errorf("state = %v", m.State())
+	}
+}
+
+func TestMainMenuExit(t *testing.T) {
+	tools, remote := twoTools(`sh -c "true"`, `sh -c "true"`)
+	m := newModel(t, tools, remote, nil)
+	press(t, m, "down")
+	press(t, m, "down")
+	if !press(t, m, "enter") {
+		t.Error(`"Exit" in the main menu should quit`)
+	}
+
+	m = newModel(t, tools, remote, nil)
+	if !press(t, m, "q") {
+		t.Error("q should quit from the main menu")
+	}
+}
+
+func TestEscapeWalksBackThroughTheMenus(t *testing.T) {
+	tools, remote := twoTools(`sh -c "true"`, `sh -c "true"`)
+	m := newModel(t, tools, remote, nil)
+	start(t, m)
+	press(t, m, "enter") // actions
+	for _, want := range []app.State{app.StateDashboard, app.StateMainMenu} {
+		press(t, m, "esc")
+		if m.State() != want {
+			t.Fatalf("state = %v, want %v", m.State(), want)
+		}
+	}
+}
+
+func TestStatusIsCheckedAgainEachTimeItIsOpened(t *testing.T) {
+	tools, remote := twoTools(`sh -c "true"`, `sh -c "true"`)
+	m := newModel(t, tools, remote, nil)
+	start(t, m)
+	if !m.app.Tools[0].HasUpdate {
+		t.Fatal("alpha should have an update")
+	}
+	remote["o/alpha"] = "v1.0.0"
+	press(t, m, "esc")   // main menu
+	press(t, m, "enter") // View tool status
+	if m.State() != app.StateDashboard || m.app.Tools[0].HasUpdate {
+		t.Errorf("state %v, alpha.HasUpdate %v: the lookup should run again", m.State(), m.app.Tools[0].HasUpdate)
 	}
 }

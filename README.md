@@ -27,6 +27,8 @@ go run ./cmd/cli          # from source
 ./tooltrack --home DIR    # keep data/ and logs/ in DIR
 ```
 
+The program opens a menu (view tool status, preferences, exit). Versions are looked up when you choose **View tool status**, which shows the dashboard; press `Enter` there for the actions (update all, pick tools to update or to exclude).
+
 | Key | Action |
 | --- | --- |
 | `↑` / `k`, `↓` / `j` | Move |

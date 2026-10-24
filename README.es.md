@@ -27,6 +27,8 @@ go run ./cmd/cli          # desde el código fuente
 ./tooltrack --home DIR    # guarda data/ y logs/ en DIR
 ```
 
+El programa abre un menú (ver estatus, preferencias, salir). Las versiones se buscan al elegir **Ver estatus de herramientas**, que muestra el panel; ahí, `Enter` abre las acciones (actualizar todas, elegir cuáles actualizar o excluir).
+
 | Tecla | Acción |
 | --- | --- |
 | `↑` / `k`, `↓` / `j` | Mover |

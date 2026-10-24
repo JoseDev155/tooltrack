@@ -39,12 +39,19 @@ type (
 	finishedMsg struct{}
 )
 
-// Menu entries of StateActionSelect, in order.
+// Entries of StateMainMenu, in order.
+const (
+	mainStatus = iota
+	mainSettings
+	mainExit
+	mainLen
+)
+
+// Entries of StateActionSelect, in order.
 const (
 	menuAll = iota
 	menuSelect
 	menuExclude
-	menuSettings
 	menuExit
 	menuLen
 )
@@ -88,19 +95,24 @@ type Model struct {
 func New(a *app.App) *Model {
 	s := spinner.New(spinner.WithSpinner(spinner.Dot))
 	s.Style = styles.Cursor
-	m := &Model{app: a, spin: s, picked: map[string]bool{}}
-	m.resetCheck()
-	return m
+	return &Model{app: a, spin: s, state: app.StateMainMenu, picked: map[string]bool{}}
 }
 
 // State returns the current screen.
 func (m *Model) State() app.State { return m.state }
 
-func (m *Model) resetCheck() {
+// startCheck switches to the loading screen and looks up every version.
+func (m *Model) startCheck() tea.Cmd {
 	m.state = app.StateLoading
 	m.cursor = 0
 	m.note = ""
 	m.checkCtx, m.cancelCheck = context.WithCancel(context.Background())
+	return tea.Batch(m.spin.Tick, m.checkCmd())
+}
+
+// goTo shows another screen with the cursor on its first entry.
+func (m *Model) goTo(s app.State) {
+	m.state, m.cursor, m.note = s, 0, ""
 }
 
 func (m *Model) checkCmd() tea.Cmd {
@@ -111,10 +123,9 @@ func (m *Model) checkCmd() tea.Cmd {
 	}
 }
 
-// Init starts the spinner and the version lookup.
-func (m *Model) Init() tea.Cmd {
-	return tea.Batch(m.spin.Tick, m.checkCmd())
-}
+// Init does nothing: versions are looked up only when the user asks for the
+// status, not when the program starts.
+func (m *Model) Init() tea.Cmd { return nil }
 
 // Update handles messages.
 func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -201,13 +212,16 @@ func (m *Model) onKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	}
 
 	switch m.state {
+	case app.StateMainMenu:
+		return m.onMainKey(key)
 	case app.StateDashboard:
 		switch key {
 		case "enter":
-			m.state, m.cursor, m.note = app.StateActionSelect, 0, ""
+			m.goTo(app.StateActionSelect)
 		case "r":
-			m.resetCheck()
-			return m, tea.Batch(m.spin.Tick, m.checkCmd())
+			return m, m.startCheck()
+		case "esc":
+			m.goTo(app.StateMainMenu)
 		}
 	case app.StateActionSelect:
 		return m.onMenuKey(key)
@@ -218,8 +232,7 @@ func (m *Model) onKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	case app.StateFinished:
 		switch key {
 		case "enter":
-			m.resetCheck()
-			return m, tea.Batch(m.spin.Tick, m.checkCmd())
+			m.goTo(app.StateMainMenu)
 		case "l":
 			if m.hasFailures() {
 				if err := OpenFile(m.app.Paths.Log); err != nil {
@@ -234,6 +247,8 @@ func (m *Model) onKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 func (m *Model) move(delta int) {
 	n := 0
 	switch m.state {
+	case app.StateMainMenu:
+		n = mainLen
 	case app.StateActionSelect:
 		n = menuLen
 	case app.StateSelectUpdate, app.StateSelectExclude:
@@ -245,6 +260,21 @@ func (m *Model) move(delta int) {
 		return
 	}
 	m.cursor = (m.cursor + delta + n) % n
+}
+
+func (m *Model) onMainKey(key string) (tea.Model, tea.Cmd) {
+	if key != "enter" {
+		return m, nil
+	}
+	switch m.cursor {
+	case mainStatus:
+		return m, m.startCheck()
+	case mainSettings:
+		m.goTo(app.StateSettings)
+	case mainExit:
+		return m.quit()
+	}
+	return m, nil
 }
 
 func (m *Model) onMenuKey(key string) (tea.Model, tea.Cmd) {
@@ -265,8 +295,6 @@ func (m *Model) onMenuKey(key string) (tea.Model, tea.Cmd) {
 			m.enterSelection(app.StateSelectUpdate)
 		case menuExclude:
 			m.enterSelection(app.StateSelectExclude)
-		case menuSettings:
-			m.state, m.cursor = app.StateSettings, 0
 		case menuExit:
 			return m.quit()
 		}
@@ -306,7 +334,7 @@ func (m *Model) onSelectKey(key string) (tea.Model, tea.Cmd) {
 func (m *Model) onSettingsKey(key string) (tea.Model, tea.Cmd) {
 	switch key {
 	case "esc":
-		m.state, m.cursor, m.note = app.StateActionSelect, 0, ""
+		m.goTo(app.StateMainMenu)
 	case "enter", " ", "space":
 		var err error
 		switch m.cursor {
@@ -423,6 +451,13 @@ func (m *Model) View() string {
 	tr := m.app.T
 	var body, help string
 	switch m.state {
+	case app.StateMainMenu:
+		items := make([]string, mainLen)
+		items[mainStatus] = tr.T("menu.status")
+		items[mainSettings] = tr.T("menu.settings")
+		items[mainExit] = tr.T("menu.exit")
+		body = views.Menu(tr.T("app.title"), items, m.cursor)
+		help = tr.T("help.menu")
 	case app.StateLoading:
 		body = views.Loading(m.spin.View(), tr.T("app.checking"))
 	case app.StateDashboard:
@@ -433,7 +468,6 @@ func (m *Model) View() string {
 		items[menuAll] = tr.T("action.all")
 		items[menuSelect] = tr.T("action.select")
 		items[menuExclude] = tr.T("action.exclude")
-		items[menuSettings] = tr.T("menu.settings")
 		items[menuExit] = tr.T("menu.exit")
 		body = views.Menu(tr.T("menu.title"), items, m.cursor)
 		help = tr.T("help.menu")
