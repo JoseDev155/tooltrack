@@ -686,3 +686,74 @@ func TestStatusIsCheckedAgainEachTimeItIsOpened(t *testing.T) {
 		t.Errorf("state %v, alpha.HasUpdate %v: the lookup should run again", m.State(), m.app.Tools[0].HasUpdate)
 	}
 }
+
+func TestEscapeCancelsTheLookupAndGoesBack(t *testing.T) {
+	tools, remote := twoTools(`sh -c "true"`, `sh -c "true"`)
+	m := newModel(t, tools, remote, nil)
+	_, cmd := m.Update(key("enter")) // start the lookup
+	if !strings.Contains(m.View(), "esc: cancel") {
+		t.Errorf("the loading screen should offer esc:\n%s", m.View())
+	}
+	if _, c := m.Update(key("esc")); c != nil {
+		t.Error("esc must not start anything")
+	}
+	if m.checkCtx.Err() == nil {
+		t.Error("esc must cancel the version lookup")
+	}
+	if m.State() != app.StateLoading {
+		t.Errorf("the screen must stay until the lookup stops, state = %v", m.State())
+	}
+	pump(t, m, cmd)
+	if m.State() != app.StateMainMenu || m.leaving {
+		t.Errorf("state = %v, leaving = %v, want the main menu", m.State(), m.leaving)
+	}
+
+	// A new lookup works normally afterwards.
+	press(t, m, "enter")
+	if m.State() != app.StateDashboard {
+		t.Errorf("state = %v, want the dashboard", m.State())
+	}
+}
+
+func TestEscapeFromTheSummaryGoesToTheStart(t *testing.T) {
+	tools, remote := twoTools(`sh -c "true"`, `sh -c "true"`)
+	m := newModel(t, tools, remote, nil)
+	start(t, m)
+	press(t, m, "enter") // actions
+	press(t, m, "enter") // update all
+	if m.State() != app.StateFinished {
+		t.Fatalf("state = %v", m.State())
+	}
+	press(t, m, "esc")
+	if m.State() != app.StateMainMenu {
+		t.Errorf("state = %v, want the main menu", m.State())
+	}
+}
+
+func TestHelpMentionsEscWhereItGoesBack(t *testing.T) {
+	tools, remote := twoTools(`sh -c "true"`, `sh -c "true"`)
+	m := newModel(t, tools, remote, nil)
+	if strings.Contains(m.View(), "esc") {
+		t.Errorf("the main menu has nothing to go back to:\n%s", m.View())
+	}
+	start(t, m)
+	screens := map[string]func(){
+		"dashboard":     func() {},
+		"actions":       func() { press(t, m, "enter") },
+		"select update": func() { press(t, m, "down"); press(t, m, "enter") },
+	}
+	for _, name := range []string{"dashboard", "actions", "select update"} {
+		screens[name]()
+		if !strings.Contains(m.View(), "esc: back") {
+			t.Errorf("%s: the help should mention esc:\n%s", name, m.View())
+		}
+	}
+	press(t, m, "esc")
+	press(t, m, "esc")
+	press(t, m, "esc")
+	press(t, m, "down")
+	press(t, m, "enter") // preferences
+	if !strings.Contains(m.View(), "esc: back") {
+		t.Errorf("preferences: the help should mention esc:\n%s", m.View())
+	}
+}
