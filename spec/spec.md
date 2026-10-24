@@ -199,7 +199,7 @@ La fórmula original (un OR independiente por componente) daba falsos positivos:
 | `StateFinished` | Resumen de éxitos y fallos; si hubo fallos, muestra la ruta del log. |
 | `StateSettings` | Idioma y acción por defecto (se guardan al cambiar). Se abre desde el menú principal. |
 
-Flujo: menú principal → *Ver estatus* (búsqueda de versiones) → panel → `Enter` → menú de acciones → selección/actualización → resumen → `Enter` vuelve al menú principal. `Esc` retrocede un paso (acciones → panel → menú principal; preferencias → menú principal). Las versiones se buscan cada vez que se abre el estatus, no al iniciar el programa.
+Flujo: menú principal → *Ver estatus* (búsqueda de versiones) → panel → `Enter` → menú de acciones → selección/actualización → resumen → `Enter` vuelve al menú principal. `Esc` retrocede un paso (acciones → panel → menú principal; preferencias → menú principal; resumen → menú principal). Durante la búsqueda de versiones `Esc` la cancela y vuelve al menú principal cuando termina. En el menú principal no hay nada a donde volver. La línea de ayuda de cada pantalla indica `esc` cuando aplica. Las versiones se buscan cada vez que se abre el estatus, no al iniciar el programa.
 
 Estados de una herramienta (`app.Status`): *Actualizada*, *Nueva versión disponible*, *No instalada* y *Sin verificar* (instalada, pero sin poder determinar la última versión; se muestra el motivo debajo).
 

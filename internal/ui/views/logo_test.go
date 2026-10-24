@@ -6,7 +6,7 @@ import (
 )
 
 func TestBannerRowsHaveEqualWidth(t *testing.T) {
-	rows := banner("tooltrack")
+	rows := banner("TOOLTRACK")
 	for i, r := range rows {
 		if got, want := len([]rune(r)), len([]rune(rows[0])); got != want {
 			t.Errorf("row %d has %d columns, want %d", i, got, want)

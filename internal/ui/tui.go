@@ -78,6 +78,7 @@ type Model struct {
 	// Check phase.
 	checkCtx    context.Context
 	cancelCheck context.CancelFunc
+	leaving     bool // esc pressed while checking: go back once the check stops
 
 	// Update phase.
 	rows      []views.ProgressRow
@@ -106,6 +107,7 @@ func (m *Model) startCheck() tea.Cmd {
 	m.state = app.StateLoading
 	m.cursor = 0
 	m.note = ""
+	m.leaving = false
 	m.checkCtx, m.cancelCheck = context.WithCancel(context.Background())
 	return tea.Batch(m.spin.Tick, m.checkCmd())
 }
@@ -137,6 +139,11 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case checkedMsg:
 		if m.state != app.StateLoading {
+			return m, nil
+		}
+		if m.leaving {
+			m.leaving = false
+			m.goTo(app.StateMainMenu)
 			return m, nil
 		}
 		return m.afterCheck()
@@ -198,6 +205,13 @@ func (m *Model) onKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		}
 		return m.quit()
 	}
+	if m.state == app.StateLoading && key == "esc" && !m.leaving {
+		// Stop the lookup and wait for it to wind down before going back, so a
+		// new lookup never overlaps the cancelled one.
+		m.leaving = true
+		m.cancelCheck()
+		return m, nil
+	}
 	if m.state == app.StateUpdating || m.state == app.StateLoading {
 		return m, nil
 	}
@@ -231,7 +245,7 @@ func (m *Model) onKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		return m.onSettingsKey(key)
 	case app.StateFinished:
 		switch key {
-		case "enter":
+		case "enter", "esc":
 			m.goTo(app.StateMainMenu)
 		case "l":
 			if m.hasFailures() {
@@ -460,6 +474,9 @@ func (m *Model) View() string {
 		help = tr.T("help.menu")
 	case app.StateLoading:
 		body = views.Loading(m.spin.View(), tr.T("app.checking"))
+		if !m.leaving {
+			help = tr.T("help.loading")
+		}
 	case app.StateDashboard:
 		body = styles.Title.Render(tr.T("menu.status")) + "\n\n" + views.Dashboard(tr, m.app.Visible())
 		help = tr.T("help.dashboard")
@@ -470,7 +487,7 @@ func (m *Model) View() string {
 		items[menuExclude] = tr.T("action.exclude")
 		items[menuExit] = tr.T("menu.exit")
 		body = views.Menu(tr.T("menu.title"), items, m.cursor)
-		help = tr.T("help.menu")
+		help = tr.T("help.actions")
 	case app.StateSelectUpdate, app.StateSelectExclude:
 		title := tr.T("select.update_title")
 		if m.state == app.StateSelectExclude {
