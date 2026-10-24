@@ -5,6 +5,7 @@ import (
 	"errors"
 	"io/fs"
 	"os"
+	"path/filepath"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -244,14 +245,15 @@ func TestResolveFallbacksOnlyForCurrentSystem(t *testing.T) {
 
 func TestResolveLinuxHomeFallback(t *testing.T) {
 	c := newChecker(nil, nil, nil)
+	want := filepath.Join("/home/u", "miniconda3", "bin", "conda") // ExpandPath joins with the host separator
 	c.Stat = func(name string) (fs.FileInfo, error) {
-		if name == "/home/u/miniconda3/bin/conda" {
+		if name == want {
 			return fakeInfo{}, nil
 		}
 		return nil, os.ErrNotExist
 	}
 	tl := Tool{Binary: "conda", Fallbacks: map[string][]string{"linux": {"~/anaconda3/bin/conda", "~/miniconda3/bin/conda"}}}
-	if !c.Resolve(&tl) || tl.ResolvedPath != "/home/u/miniconda3/bin/conda" {
+	if !c.Resolve(&tl) || tl.ResolvedPath != want {
 		t.Errorf("unexpected state: %+v", tl)
 	}
 }
@@ -264,8 +266,8 @@ func TestExpandPath(t *testing.T) {
 		`%LOCALAPPDATA%\Programs\x`: `C:\Users\u\AppData\Local\Programs\x`,
 		`%UNKNOWN_VAR%\x`:           `%UNKNOWN_VAR%\x`,
 		`C:\ProgramData\x`:          `C:\ProgramData\x`,
-		"~/bin/tool":                "/home/u/bin/tool",
-		"~":                         "/home/u",
+		"~/bin/tool":                filepath.Join("/home/u", "bin", "tool"),
+		"~":                         filepath.Join("/home/u"),
 		"/abs/path":                 "/abs/path",
 	}
 	for in, want := range cases {

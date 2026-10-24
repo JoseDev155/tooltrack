@@ -5,6 +5,7 @@
       "Bash(go vet:*)",
       "Bash(go test:*)",
       "Bash(go mod tidy)",
+      "Bash(make:*)",
       "Bash(gofmt:*)",
       "Bash(git status:*)",
       "Bash(git diff:*)",

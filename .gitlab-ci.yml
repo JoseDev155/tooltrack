@@ -1,0 +1,29 @@
+# Mirror of the GitHub Actions pipeline for GitLab. It runs on Linux only;
+# the Windows and macOS test runs live in .github/workflows/ci.yml.
+image: golang:1.24
+
+stages:
+  - test
+  - build
+
+variables:
+  CGO_ENABLED: "0"
+
+check:
+  stage: test
+  script:
+    - test -z "$(gofmt -l .)" || { gofmt -l .; exit 1; }
+    - go vet ./...
+    - go test ./...
+
+build:
+  stage: build
+  parallel:
+    matrix:
+      - TARGET: [linux-amd64, windows-amd64, darwin-amd64, darwin-arm64]
+  script:
+    - scripts/build.sh "$TARGET"
+  artifacts:
+    paths:
+      - dist/
+    expire_in: 1 week
