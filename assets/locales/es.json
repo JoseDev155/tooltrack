@@ -1,0 +1,20 @@
+{
+  "app.title": "tooltrack",
+  "menu.status": "Ver estatus de herramientas",
+  "menu.settings": "Preferencias de la herramienta",
+  "menu.exit": "Salir",
+  "table.tool": "Herramienta",
+  "table.local": "Versión local",
+  "table.latest": "Última versión",
+  "table.status": "Estado",
+  "status.updated": "Actualizada",
+  "status.available": "Nueva versión disponible",
+  "status.not_found": "No instalada",
+  "status.unknown": "Sin verificar",
+  "action.all": "Actualizar todas",
+  "action.select": "Seleccionar herramientas a actualizar",
+  "action.exclude": "Seleccionar herramientas a excluir",
+  "error.title": "Ha ocurrido un error durante la actualización",
+  "error.view_logs": "Ver mensaje en el archivo log: %s",
+  "error.no_update_command": "No hay comando de actualización para este sistema operativo"
+}
