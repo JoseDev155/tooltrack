@@ -1,0 +1,111 @@
+[
+  {
+    "id": "uv",
+    "name": "Astral uv",
+    "binary": "uv",
+    "check_mode": "github",
+    "github_repo": "astral-sh/uv",
+    "version_command": "uv --version",
+    "version_regex": "uv\\s+(\\d+\\.\\d+\\.\\d+)",
+    "update_commands": {
+      "default": "uv self update"
+    },
+    "enabled": true
+  },
+  {
+    "id": "bun",
+    "name": "Bun",
+    "binary": "bun",
+    "check_mode": "github",
+    "github_repo": "oven-sh/bun",
+    "version_command": "bun --version",
+    "version_regex": "(\\d+\\.\\d+\\.\\d+)",
+    "update_commands": {
+      "default": "bun upgrade"
+    },
+    "enabled": true
+  },
+  {
+    "id": "deno",
+    "name": "Deno",
+    "binary": "deno",
+    "check_mode": "github",
+    "github_repo": "denoland/deno",
+    "version_command": "deno --version",
+    "version_regex": "deno\\s+(\\d+\\.\\d+\\.\\d+)",
+    "update_commands": {
+      "default": "deno upgrade"
+    },
+    "enabled": true
+  },
+  {
+    "id": "rustup",
+    "name": "Rustup",
+    "binary": "rustup",
+    "check_mode": "url",
+    "remote_url": "https://static.rust-lang.org/rustup/release-stable.toml",
+    "remote_regex": "version\\s*=\\s*'(\\d+\\.\\d+\\.\\d+)'",
+    "version_command": "rustup --version",
+    "version_regex": "rustup\\s+(\\d+\\.\\d+\\.\\d+)",
+    "update_commands": {
+      "default": "rustup update stable"
+    },
+    "enabled": true
+  },
+  {
+    "id": "fnm",
+    "name": "Fast Node Manager",
+    "binary": "fnm",
+    "check_mode": "github",
+    "github_repo": "Schniz/fnm",
+    "version_command": "fnm --version",
+    "version_regex": "fnm\\s+(\\d+\\.\\d+\\.\\d+)",
+    "update_commands": {
+      "default": "cargo install fnm --force",
+      "darwin": "brew upgrade fnm",
+      "windows": "winget upgrade Schniz.fnm --accept-source-agreements --accept-package-agreements"
+    },
+    "enabled": true
+  },
+  {
+    "id": "anaconda",
+    "name": "Conda Package Manager",
+    "binary": "conda",
+    "check_mode": "command",
+    "version_command": "conda --version",
+    "version_regex": "conda\\s+(\\d+\\.\\d+\\.\\d+)",
+    "update_commands": {
+      "default": "conda update -n base -c defaults conda -y"
+    },
+    "fallbacks": {
+      "windows": [
+        "%USERPROFILE%\\anaconda3\\condabin\\conda.bat",
+        "%USERPROFILE%\\miniconda3\\condabin\\conda.bat",
+        "C:\\ProgramData\\anaconda3\\condabin\\conda.bat"
+      ],
+      "linux": [
+        "~/anaconda3/bin/conda",
+        "~/miniconda3/bin/conda"
+      ],
+      "darwin": [
+        "~/anaconda3/bin/conda",
+        "~/miniconda3/bin/conda"
+      ]
+    },
+    "enabled": true
+  },
+  {
+    "id": "gh",
+    "name": "GitHub CLI",
+    "binary": "gh",
+    "check_mode": "github",
+    "github_repo": "cli/cli",
+    "version_command": "gh --version",
+    "version_regex": "gh version\\s+(\\d+\\.\\d+\\.\\d+)",
+    "update_commands": {
+      "darwin": "brew upgrade gh",
+      "windows": "winget upgrade GitHub.cli --accept-source-agreements --accept-package-agreements"
+    },
+    "enabled": true
+  }
+]
