@@ -16,6 +16,8 @@ const (
 	StateUpdating
 	StateFinished
 	StateSettings
+	// StateMainMenu is the first screen: status, preferences, exit.
+	StateMainMenu
 )
 
 func (s State) String() string {
@@ -36,6 +38,8 @@ func (s State) String() string {
 		return "finished"
 	case StateSettings:
 		return "settings"
+	case StateMainMenu:
+		return "main-menu"
 	}
 	return "unknown"
 }
