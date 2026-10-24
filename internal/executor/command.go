@@ -8,6 +8,7 @@ import (
 	"os/exec"
 	"runtime"
 	"strings"
+	"time"
 )
 
 // BuildCommand returns the command that runs resolvedPath with rawArgs. On
@@ -18,11 +19,19 @@ func BuildCommand(resolvedPath string, rawArgs []string) *exec.Cmd {
 	return exec.Command(name, args...)
 }
 
+// killWaitDelay is how long Wait keeps waiting for output pipes after the
+// process was killed. Without it, a grandchild that inherited the pipes (a
+// shell running `sleep`, an installer spawned by a tool) would keep Wait
+// blocked long after the timeout.
+const killWaitDelay = time.Second
+
 // BuildCommandContext is like BuildCommand but the process is killed when ctx
 // is done.
 func BuildCommandContext(ctx context.Context, resolvedPath string, rawArgs []string) *exec.Cmd {
 	name, args := commandLine(runtime.GOOS, resolvedPath, rawArgs)
-	return exec.CommandContext(ctx, name, args...)
+	cmd := exec.CommandContext(ctx, name, args...)
+	cmd.WaitDelay = killWaitDelay
+	return cmd
 }
 
 // commandLine decides the program and arguments for goos. It is separate from
