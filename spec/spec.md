@@ -76,7 +76,7 @@ La primera ejecución crea las carpetas y escribe `config.json` y `tools.json` d
 
 ```json
 {
-  "language": "es",
+  "language": "en",
   "default_action": "ask",
   "github_token": "",
   "max_concurrent_checks": 5,
@@ -84,7 +84,7 @@ La primera ejecución crea las carpetas y escribe `config.json` y `tools.json` d
 }
 ```
 
-- `language`: `"es"` o `"en"`.
+- `language`: `"en"` (por defecto) o `"es"`.
 - `default_action`: `"ask"`, `"update_all"`, `"update_selected"` o `"exclude_selected"`. Se aplica una vez al iniciar (sección 8).
 - `github_token`: opcional; sube el límite de la API de 60 a 5 000 peticiones por hora. Si está vacío se usa la variable `GITHUB_TOKEN`. El valor de la variable nunca se escribe en el archivo ni en los logs.
 - `max_concurrent_checks` y `timeout_seconds` deben ser al menos 1. `timeout_seconds` aplica a las peticiones HTTP.
@@ -256,7 +256,8 @@ Los archivos `assets/locales/{es,en}.json` son planos (clave → texto) y se emb
 | Actualizaciones | Paralelas o secuenciales | Secuenciales por defecto |
 | Salida de versión | Solo stdout | stdout y stderr |
 | Pantalla de carga | Barra de progreso indeterminada | Spinner |
-| Pantalla inicial | Búsqueda de versiones al arrancar | Menú principal; la búsqueda se hace al elegir *Ver estatus* |
+| Pantalla inicial | Búsqueda de versiones al arrancar | Menú principal con el logo `tooltrack` en letras de bloque; la búsqueda se hace al elegir *Ver estatus* |
+| Idioma por defecto | Español | Inglés (`language` en `config.json`; un archivo existente conserva su valor) |
 | Versión remota de Rustup | Releases de GitHub | Manifiesto oficial `release-stable.toml` (modo `url`); rustup solo publica tags, no releases. Un `rustup` antiguo en `tools.json` sin modificar se migra al leerlo |
 | Estados de una herramienta | 3 | 4 (se añade *Sin verificar*) |
 | Nombre | `updater` | `tooltrack` |

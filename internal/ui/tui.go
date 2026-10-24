@@ -57,7 +57,7 @@ const (
 )
 
 var (
-	languages = []string{config.LangES, config.LangEN}
+	languages = []string{config.LangEN, config.LangES}
 	actions   = []string{config.ActionAsk, config.ActionUpdateAll, config.ActionUpdateSelected, config.ActionExcludeSelected}
 )
 
@@ -456,7 +456,7 @@ func (m *Model) View() string {
 		items[mainStatus] = tr.T("menu.status")
 		items[mainSettings] = tr.T("menu.settings")
 		items[mainExit] = tr.T("menu.exit")
-		body = views.Menu(tr.T("app.title"), items, m.cursor)
+		body = views.MainMenu(items, m.cursor)
 		help = tr.T("help.menu")
 	case app.StateLoading:
 		body = views.Loading(m.spin.View(), tr.T("app.checking"))

@@ -18,6 +18,7 @@ import (
 	"github.com/JoseDev155/tooltrack/internal/i18n"
 	"github.com/JoseDev155/tooltrack/internal/logger"
 	"github.com/JoseDev155/tooltrack/internal/tool"
+	"github.com/JoseDev155/tooltrack/internal/ui/views"
 )
 
 type fakeRemote map[string]string
@@ -606,9 +607,14 @@ func TestMainMenuIsTheFirstScreen(t *testing.T) {
 		t.Fatalf("state = %v", m.State())
 	}
 	view := m.View()
-	for _, want := range []string{"tooltrack", "View tool status", "Tool preferences", "Exit", "▸ View tool status", "↑/↓: move"} {
+	for _, want := range []string{"View tool status", "Tool preferences", "Exit", "▸ View tool status", "↑/↓: move"} {
 		if !strings.Contains(view, want) {
 			t.Errorf("main menu is missing %q:\n%s", want, view)
+		}
+	}
+	for _, row := range strings.Split(views.Logo(), "\n") {
+		if !strings.Contains(view, row) {
+			t.Errorf("main menu is missing the logo row %q:\n%s", row, view)
 		}
 	}
 	if strings.Contains(view, "Update all") || strings.Contains(view, "Alpha") {

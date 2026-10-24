@@ -40,7 +40,7 @@ type Config struct {
 // Default returns the configuration used when no file exists.
 func Default() Config {
 	return Config{
-		Language:            LangES,
+		Language:            LangEN,
 		DefaultAction:       ActionAsk,
 		MaxConcurrentChecks: 5,
 		TimeoutSeconds:      30,

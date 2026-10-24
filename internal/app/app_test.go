@@ -290,7 +290,7 @@ func TestNewLoadsEverything(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer a.Close()
-	if len(a.Tools) != 7 || a.T.Lang() != "es" || a.Checker == nil {
+	if len(a.Tools) != 7 || a.T.Lang() != "en" || a.Checker == nil {
 		t.Errorf("unexpected app: %d tools, lang %q", len(a.Tools), a.T.Lang())
 	}
 	if a.Tools[0].Name != "Astral uv" && strings.ToLower(a.Tools[0].Name) > strings.ToLower(a.Tools[1].Name) {
