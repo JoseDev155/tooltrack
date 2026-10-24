@@ -1,0 +1,21 @@
+# Runtime data
+data/
+logs/
+
+# Build output
+dist/
+*.exe
+
+# Go
+*.test
+*.out
+coverage.*
+
+# Editors / OS
+.idea/
+.vscode/
+.DS_Store
+
+# Local agent preferences (personal, not shared)
+CLAUDE.local.md
+.claude/settings.local.json
