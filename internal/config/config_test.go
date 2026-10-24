@@ -180,3 +180,9 @@ func TestEnsureDefaultsKeepsExistingFiles(t *testing.T) {
 		t.Errorf("tools.json overwritten: %s", data)
 	}
 }
+
+func TestDefaultLanguageIsEnglish(t *testing.T) {
+	if got := Default().Language; got != LangEN {
+		t.Errorf("default language = %q, want %q", got, LangEN)
+	}
+}
