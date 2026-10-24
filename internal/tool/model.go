@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"regexp"
+	"strings"
 )
 
 // CheckMode selects where the latest version of a tool comes from.
@@ -14,6 +15,9 @@ type CheckMode string
 const (
 	// CheckModeGitHub reads the latest release tag from the GitHub API.
 	CheckModeGitHub CheckMode = "github"
+	// CheckModeURL downloads RemoteURL and extracts the version with
+	// RemoteRegex. It is for tools that publish no GitHub releases.
+	CheckModeURL CheckMode = "url"
 	// CheckModeCommand asks the tool itself (RemoteCommand/RemoteRegex).
 	// Without a RemoteCommand the remote version stays unknown.
 	CheckModeCommand CheckMode = "command"
@@ -30,6 +34,7 @@ type Tool struct {
 	VersionRegex   string    `json:"version_regex"`
 	RemoteCommand  string    `json:"remote_command,omitempty"`
 	RemoteRegex    string    `json:"remote_regex,omitempty"`
+	RemoteURL      string    `json:"remote_url,omitempty"`
 
 	// UpdateCommands maps a GOOS value ("windows", "darwin", "linux") to the
 	// command line that updates the tool. The "default" key applies to any
@@ -80,6 +85,13 @@ func (t *Tool) Validate() error {
 	case CheckModeGitHub:
 		if t.GitHubRepo == "" {
 			return fmt.Errorf("tool %q: github_repo is required in github mode", t.ID)
+		}
+	case CheckModeURL:
+		if !strings.HasPrefix(t.RemoteURL, "https://") {
+			return fmt.Errorf("tool %q: remote_url must be an https URL in url mode", t.ID)
+		}
+		if t.RemoteRegex == "" {
+			return fmt.Errorf("tool %q: remote_regex is required in url mode", t.ID)
 		}
 	case CheckModeCommand:
 	default:

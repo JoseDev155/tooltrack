@@ -42,8 +42,9 @@
     "id": "rustup",
     "name": "Rustup",
     "binary": "rustup",
-    "check_mode": "github",
-    "github_repo": "rust-lang/rustup",
+    "check_mode": "url",
+    "remote_url": "https://static.rust-lang.org/rustup/release-stable.toml",
+    "remote_regex": "version\\s*=\\s*'(\\d+\\.\\d+\\.\\d+)'",
     "version_command": "rustup --version",
     "version_regex": "rustup\\s+(\\d+\\.\\d+\\.\\d+)",
     "update_commands": {

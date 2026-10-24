@@ -60,8 +60,10 @@ func New(paths config.Paths) (*App, error) {
 	if err != nil {
 		return nil, err
 	}
-	gh := tool.NewGitHubClient(cfg.Token(), time.Duration(cfg.TimeoutSeconds)*time.Second)
+	timeout := time.Duration(cfg.TimeoutSeconds) * time.Second
+	gh := tool.NewGitHubClient(cfg.Token(), timeout)
 	a := &App{Cfg: cfg, Paths: paths, Tools: tools, T: tr, Log: log, Checker: tool.NewChecker(gh)}
+	a.Checker.Fetch = tool.NewFetcher(timeout)
 	a.sortTools()
 	return a, nil
 }

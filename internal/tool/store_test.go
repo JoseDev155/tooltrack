@@ -115,3 +115,21 @@ func contains(s, sub string) bool {
 	}
 	return false
 }
+
+func TestMergeMigratesOldRustupEntry(t *testing.T) {
+	defaults, err := Defaults()
+	if err != nil {
+		t.Fatal(err)
+	}
+	old := Tool{ID: "rustup", Name: "Rustup", Binary: "rustup", CheckMode: CheckModeGitHub, GitHubRepo: "rust-lang/rustup"}
+	got := Merge([]Tool{old}, defaults)[0]
+	if got.CheckMode != CheckModeURL || got.RemoteURL == "" || got.RemoteRegex == "" || got.GitHubRepo != "" {
+		t.Errorf("old rustup entry not migrated: %+v", got)
+	}
+
+	custom := old
+	custom.GitHubRepo = "someone/rustup-fork"
+	if got := Merge([]Tool{custom}, defaults)[0]; got.CheckMode != CheckModeGitHub || got.GitHubRepo != "someone/rustup-fork" {
+		t.Errorf("customised entry must be left alone: %+v", got)
+	}
+}

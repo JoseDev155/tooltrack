@@ -33,7 +33,7 @@ func Merge(user, defaults []Tool) []Tool {
 	merged := make([]Tool, 0, len(user)+len(defaults))
 	seen := make(map[string]bool, len(user))
 	for _, t := range user {
-		merged = append(merged, t)
+		merged = append(merged, migrate(t, defaults))
 		seen[t.ID] = true
 	}
 	for _, t := range defaults {
@@ -42,6 +42,23 @@ func Merge(user, defaults []Tool) []Tool {
 		}
 	}
 	return merged
+}
+
+// migrate upgrades catalogs written by earlier releases. Rustup used to be
+// checked through GitHub releases, which it does not publish, so an untouched
+// entry of that kind takes the version source of the current preset. Entries
+// the user changed are left alone.
+func migrate(t Tool, defaults []Tool) Tool {
+	if t.ID != "rustup" || t.CheckMode != CheckModeGitHub || t.GitHubRepo != "rust-lang/rustup" {
+		return t
+	}
+	for _, d := range defaults {
+		if d.ID == t.ID && d.CheckMode == CheckModeURL {
+			t.CheckMode, t.GitHubRepo = d.CheckMode, ""
+			t.RemoteURL, t.RemoteRegex = d.RemoteURL, d.RemoteRegex
+		}
+	}
+	return t
 }
 
 // LoadMerged returns the user's catalog at path merged with the defaults. A
