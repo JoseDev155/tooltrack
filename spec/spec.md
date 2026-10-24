@@ -112,9 +112,10 @@ La primera ejecución crea las carpetas y escribe `config.json` y `tools.json` d
 | Campo | Descripción |
 | --- | --- |
 | `id`, `name`, `binary` | Identificador único, nombre visible y ejecutable a buscar. |
-| `check_mode` | `"github"`: última versión desde GitHub Releases (exige `github_repo`). `"command"`: se consulta a la herramienta (`remote_command`). |
+| `check_mode` | `"github"`: última versión desde GitHub Releases (exige `github_repo`). `"command"`: se consulta a la herramienta (`remote_command`). `"url"`: se descarga `remote_url` (solo `https://`, máx. 1 MiB) y se extrae la versión con `remote_regex`; sirve para herramientas sin releases en GitHub. |
 | `github_repo` | `owner/name`. Se rechazan segmentos `.` y `..`. |
 | `version_command`, `version_regex` | Comando de versión local y regex cuyo grupo 1 es la versión. |
+| `remote_url`, `remote_regex` | Solo en modo `url`; ambos son obligatorios y `remote_url` debe ser `https`. |
 | `remote_command`, `remote_regex` | Solo en modo `command`. Sin `remote_command` la versión remota queda desconocida. `remote_regex` usa `version_regex` si falta. |
 | `update_commands` | Mapa `GOOS` → línea de comandos. La clave `default` aplica a cualquier sistema sin entrada propia. Sin comando para el sistema actual, la herramienta no se ofrece para actualizar. |
 | `fallbacks` | Mapa `GOOS` → rutas a probar si el binario no está en `PATH`. Admiten `~`, `%USERPROFILE%`, `%LOCALAPPDATA%` y otras `%VARIABLE%`. |
@@ -229,7 +230,7 @@ Los archivos `assets/locales/{es,en}.json` son planos (clave → texto) y se emb
 | Astral uv | `uv` | `uv` | `astral-sh/uv` | `uv self update` |
 | Bun | `bun` | `bun` | `oven-sh/bun` | `bun upgrade` |
 | Deno | `deno` | `deno` | `denoland/deno` | `deno upgrade` |
-| Rustup | `rustup` | `rustup` | `rust-lang/rustup` | `rustup update stable` (también actualiza rustup) |
+| Rustup | `rustup` | `rustup` | modo `url`: `static.rust-lang.org/rustup/release-stable.toml` | `rustup update stable` (también actualiza rustup) |
 | Fast Node Manager | `fnm` | `fnm` | `Schniz/fnm` | Linux: `cargo install fnm --force`; macOS: `brew upgrade fnm`; Windows: `winget upgrade Schniz.fnm …` |
 | Conda | `anaconda` | `conda` | — (modo `command`, sin versión remota) | `conda update -n base -c defaults conda -y` |
 | GitHub CLI | `gh` | `gh` | `cli/cli` | macOS: `brew upgrade gh`; Windows: `winget upgrade GitHub.cli …`; Linux: sin comando automático |
@@ -256,6 +257,7 @@ Los archivos `assets/locales/{es,en}.json` son planos (clave → texto) y se emb
 | Salida de versión | Solo stdout | stdout y stderr |
 | Pantalla de carga | Barra de progreso indeterminada | Spinner |
 | Pantalla inicial | Búsqueda de versiones al arrancar | Menú principal; la búsqueda se hace al elegir *Ver estatus* |
+| Versión remota de Rustup | Releases de GitHub | Manifiesto oficial `release-stable.toml` (modo `url`); rustup solo publica tags, no releases. Un `rustup` antiguo en `tools.json` sin modificar se migra al leerlo |
 | Estados de una herramienta | 3 | 4 (se añade *Sin verificar*) |
 | Nombre | `updater` | `tooltrack` |
 | GUI Wails | En el Makefile | Fase posterior |

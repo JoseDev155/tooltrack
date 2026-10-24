@@ -96,6 +96,8 @@ func TestParseCatalogErrors(t *testing.T) {
 		"missing binary": {`[{"id":"x"}]`, "binary is required"},
 		"unknown mode":   {`[{"id":"x","binary":"x","check_mode":"web"}]`, "unknown check_mode"},
 		"github no repo": {`[{"id":"x","binary":"x","check_mode":"github","version_command":"x","version_regex":"a"}]`, "github_repo is required"},
+		"url not https":  {`[{"id":"x","binary":"x","check_mode":"url","remote_url":"http://x.test/v","remote_regex":"a","version_command":"x","version_regex":"a"}]`, "remote_url must be an https URL"},
+		"url no regex":   {`[{"id":"x","binary":"x","check_mode":"url","remote_url":"https://x.test/v","version_command":"x","version_regex":"a"}]`, "remote_regex is required"},
 		"no version cmd": {`[{"id":"x","binary":"x","check_mode":"command"}]`, "version_command and version_regex"},
 		"bad regex":      {`[{"id":"x","binary":"x","check_mode":"command","version_command":"x","version_regex":"("}]`, "invalid version_regex"},
 		"bad remote":     {`[{"id":"x","binary":"x","check_mode":"command","version_command":"x","version_regex":"a","remote_regex":"("}]`, "invalid remote_regex"},

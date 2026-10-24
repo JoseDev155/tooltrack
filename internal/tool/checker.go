@@ -40,6 +40,7 @@ type Checker struct {
 	HomeDir        func() (string, error)
 	Output         func(ctx context.Context, path string, args []string, timeout time.Duration) ([]byte, error)
 	GitHub         RemoteVersioner
+	Fetch          Fetcher
 	VersionTimeout time.Duration
 }
 
@@ -54,6 +55,7 @@ func NewChecker(gh RemoteVersioner) *Checker {
 		HomeDir:        os.UserHomeDir,
 		Output:         executor.Output,
 		GitHub:         gh,
+		Fetch:          NewFetcher(30 * time.Second),
 		VersionTimeout: DefaultVersionTimeout,
 	}
 }
@@ -181,6 +183,15 @@ func (c *Checker) remoteVersion(ctx context.Context, t *Tool) (string, error) {
 			return v.String(), nil
 		}
 		return "", fmt.Errorf("latest release tag %q has no version number", tag)
+	case CheckModeURL:
+		if c.Fetch == nil {
+			return "", errors.New("URL fetcher not configured")
+		}
+		body, err := c.Fetch(ctx, t.RemoteURL)
+		if err != nil {
+			return "", err
+		}
+		return ExtractVersion(string(body), t.RemoteRegex)
 	case CheckModeCommand:
 		if t.RemoteCommand == "" {
 			return "", nil

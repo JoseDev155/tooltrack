@@ -360,3 +360,50 @@ func TestUpdateJobErrors(t *testing.T) {
 		t.Error("expected an error for an unterminated quote")
 	}
 }
+
+func rustupTool() Tool {
+	return Tool{
+		ID: "rustup", Name: "Rustup", Binary: "rustup", CheckMode: CheckModeURL,
+		RemoteURL:      "https://static.example.test/rustup/release-stable.toml",
+		RemoteRegex:    `version\s*=\s*'(\d+\.\d+\.\d+)'`,
+		VersionCommand: "rustup --version", VersionRegex: `rustup\s+(\d+\.\d+\.\d+)`, Enabled: true,
+	}
+}
+
+func TestCheckURLMode(t *testing.T) {
+	c := newChecker(map[string]string{"rustup": "/usr/bin/rustup"}, map[string]string{"/usr/bin/rustup --version": "rustup 1.28.0 (abc 2025-01-01)"}, nil)
+	var asked string
+	c.Fetch = func(ctx context.Context, url string) ([]byte, error) {
+		asked = url
+		return []byte("schema-version = '1'\nversion = '1.29.2'\n"), nil
+	}
+	tl := rustupTool()
+	c.Check(context.Background(), &tl)
+	if asked != tl.RemoteURL {
+		t.Errorf("fetched %q, want %q", asked, tl.RemoteURL)
+	}
+	if tl.RemoteVersion != "1.29.2" || !tl.HasUpdate || tl.LastError != "" {
+		t.Errorf("unexpected state: %+v", tl)
+	}
+}
+
+func TestCheckURLModeErrors(t *testing.T) {
+	c := newChecker(map[string]string{"rustup": "/usr/bin/rustup"}, map[string]string{"/usr/bin/rustup --version": "rustup 1.29.2"}, nil)
+	tl := rustupTool()
+	c.Check(context.Background(), &tl)
+	if tl.LastError == "" || tl.InstalledVersion != "1.29.2" {
+		t.Errorf("without a fetcher: %+v", tl)
+	}
+	c.Fetch = func(context.Context, string) ([]byte, error) { return nil, errors.New("boom") }
+	tl = rustupTool()
+	c.Check(context.Background(), &tl)
+	if tl.LastError == "" || tl.RemoteVersion != "" || tl.InstalledVersion != "1.29.2" {
+		t.Errorf("fetch failure: %+v", tl)
+	}
+	c.Fetch = func(context.Context, string) ([]byte, error) { return []byte("<html>no version</html>"), nil }
+	tl = rustupTool()
+	c.Check(context.Background(), &tl)
+	if tl.LastError == "" || tl.HasUpdate {
+		t.Errorf("unparseable body: %+v", tl)
+	}
+}
