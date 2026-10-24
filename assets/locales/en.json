@@ -1,0 +1,20 @@
+{
+  "app.title": "tooltrack",
+  "menu.status": "View tool status",
+  "menu.settings": "Tool preferences",
+  "menu.exit": "Exit",
+  "table.tool": "Tool",
+  "table.local": "Local version",
+  "table.latest": "Latest version",
+  "table.status": "Status",
+  "status.updated": "Up to date",
+  "status.available": "New version available",
+  "status.not_found": "Not installed",
+  "status.unknown": "Not verified",
+  "action.all": "Update all",
+  "action.select": "Select tools to update",
+  "action.exclude": "Select tools to exclude",
+  "error.title": "An error occurred during the update",
+  "error.view_logs": "See the message in the log file: %s",
+  "error.no_update_command": "There is no update command for this operating system"
+}
